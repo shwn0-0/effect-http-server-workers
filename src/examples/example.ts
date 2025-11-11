@@ -1,27 +1,25 @@
-import {Effect, Context} from "effect"
+import { Effect } from "effect";
 
-class RandomService extends Context.Tag("MyRandomService")<RandomService, { readonly next: Effect.Effect<number> }>() {}
+class RandomService extends Effect.Service<RandomService>()("RandomService", {
+  effect: Effect.succeed({
+    next: Effect.sync(() => Math.random()),
+  }),
+}) {}
 
-const program = Effect.gen(function*() {
-  const random = yield* RandomService
-  const number = yield* random.next
+Effect.gen(function* () {
+  const random = yield* RandomService;
+  const number = yield* random.next;
 
-  if (number < .5) {
-    return yield* Effect.succeed(`Succeeded with: ${number}`)
+  if (number < 0.5) {
+    return yield* Effect.succeed(`Succeeded with: ${number}`);
   } else {
-    return yield* Effect.fail(`Failed with: ${number}`)
+    return yield* Effect.fail(`Failed with: ${number}`);
   }
-})
-.pipe(
+}).pipe(
   Effect.match({
     onFailure: (error) => console.error(error),
-    onSuccess: (value) => console.log(value)
-  })
-)
-
-const runnable = Effect.provideService(program, RandomService, {
-  next: Effect.sync(() => Math.random())
-})
-
-Effect.runPromise(runnable)
-
+    onSuccess: (value) => console.log(value),
+  }),
+  Effect.provide(RandomService.Default),
+  Effect.runPromise,
+);
