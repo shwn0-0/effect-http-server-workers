@@ -17,8 +17,8 @@ Effect.gen(function* () {
   }
 }).pipe(
   Effect.match({
-    onFailure: (error) => console.error(error),
-    onSuccess: (value) => console.log(value),
+    onFailure: console.error,
+    onSuccess: console.log,
   }),
   Effect.provide(RandomService.Default),
   Effect.runPromise,

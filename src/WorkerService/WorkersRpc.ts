@@ -1,27 +1,25 @@
 import { Rpc, RpcGroup } from "@effect/rpc";
 import { Console, Effect, Layer, Schema } from "effect";
 import { ApiError } from "@/GatewayService/index.js";
-import { NodeWorkerPool, NodeWorkerPoolLive } from "./Pool.js";
-import { NodeWorkerRequest, NodeWorkerRequestSchema } from "./worker/index.js";
+import { WorkerPool, WorkerPoolLive } from "./Pool.js";
+import { WorkerRequest, WorkerRequestSchema } from "./worker/index.js";
 
-export class NodeWorkersRpcRequestSchema extends NodeWorkerRequestSchema.omit(
-  "page",
-) {}
+export class WorkersRpcRequestSchema extends WorkerRequestSchema.omit("page") {}
 
-export type NodeWorkersRpcRequest = Schema.Schema.Type<
-  typeof NodeWorkersRpcRequestSchema
+export type WorkersRpcRequest = Schema.Schema.Type<
+  typeof WorkersRpcRequestSchema
 >;
 
-export class NodeWorkersRpc extends RpcGroup.make(
+export class WorkersRpc extends RpcGroup.make(
   Rpc.make("HomePage", {
     error: ApiError,
     success: Schema.String,
-    payload: NodeWorkersRpcRequestSchema,
+    payload: WorkersRpcRequestSchema,
   }),
   Rpc.make("AboutPage", {
     error: ApiError,
     success: Schema.String,
-    payload: NodeWorkersRpcRequestSchema,
+    payload: WorkersRpcRequestSchema,
   }),
   Rpc.make("UnknownPage", {
     error: ApiError,
@@ -29,13 +27,14 @@ export class NodeWorkersRpc extends RpcGroup.make(
   }),
 ) {}
 
-export class NodeWorkersService extends Effect.Service<NodeWorkersService>()(
-  "NodeWorkerService",
+export class WorkersService extends Effect.Service<WorkersService>()(
+  "WorkerService",
   {
+    dependencies: [WorkerPoolLive],
     effect: Effect.gen(function* () {
-      const workers = yield* NodeWorkerPool;
+      const workers = yield* WorkerPool;
       return {
-        handleRequest: (request: NodeWorkerRequest) =>
+        handleRequest: (request: WorkerRequest) =>
           workers.executeEffect(request).pipe(
             Effect.tap(
               Console.log(
@@ -55,9 +54,9 @@ export class NodeWorkersService extends Effect.Service<NodeWorkersService>()(
   },
 ) {}
 
-export const NodeWorkersLive = NodeWorkersRpc.toLayer(
+export const WorkersLive = WorkersRpc.toLayer(
   Effect.gen(function* () {
-    const workersService = yield* NodeWorkersService;
+    const workersService = yield* WorkersService;
     return {
       HomePage: (req) => workersService.handleRequest({ ...req, page: "home" }),
       AboutPage: (req) =>
@@ -65,7 +64,4 @@ export const NodeWorkersLive = NodeWorkersRpc.toLayer(
       UnknownPage: () => workersService.handleRequest({ page: "404" }),
     };
   }),
-).pipe(
-  Layer.provide(NodeWorkersService.Default),
-  Layer.provide(NodeWorkerPoolLive),
-);
+).pipe(Layer.provide(WorkersService.Default));

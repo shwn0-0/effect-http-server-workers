@@ -1,2 +1,2 @@
-export type { NodeWorkerRequest, NodeWorkerError } from "./Types.js";
-export { NodeWorkerRequestSchema } from "./Types.js";
+export type { WorkerRequest, WorkerError } from "./Types.js";
+export { WorkerRequestSchema } from "./Types.js";

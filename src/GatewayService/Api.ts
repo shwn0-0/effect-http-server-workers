@@ -64,22 +64,25 @@ export class Api extends HttpApi.make("Api").add(
           ),
         ),
     )
-    .add(HttpApiEndpoint.get("catchAll", "/*"))
-    .addError(
-      Schema.String.pipe(
-        HttpApiSchema.withEncoding({
-          kind: "Text",
-          contentType: "text/html",
-        }),
-      ),
-      { status: 404 },
-    )
-    .addError(
-      ApiError.pipe(
-        HttpApiSchema.withEncoding({
-          kind: "Json",
-          contentType: "application/json",
-        }),
-      ),
+    .add(HttpApiEndpoint.get("favicon", "/favicon.ico").addError(Schema.Void))
+    .add(
+      HttpApiEndpoint.get("catchAll", "/*")
+        .addError(
+          Schema.String.pipe(
+            HttpApiSchema.withEncoding({
+              kind: "Text",
+              contentType: "text/html",
+            }),
+          ),
+          { status: 404 },
+        )
+        .addError(
+          ApiError.pipe(
+            HttpApiSchema.withEncoding({
+              kind: "Json",
+              contentType: "application/json",
+            }),
+          ),
+        ),
     ),
 ) {}

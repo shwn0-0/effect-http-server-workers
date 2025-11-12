@@ -1,34 +1,32 @@
-import { WorkerRunner } from "@effect/platform";
-import { NodeRuntime, NodeWorkerRunner } from "@effect/platform-node";
 import { Console, Effect, Layer } from "effect";
-import { NodeWorkerError, NodeWorkerRequest } from "./Types.js";
+import { BunRuntime, BunWorkerRunner } from "@effect/platform-bun";
+import { WorkerRunner } from "@effect/platform";
+import { WorkerError, WorkerRequest } from "./Types.js";
 
-const worker = Effect.gen(function* () {
-  yield* WorkerRunner.make(({ page, content }: NodeWorkerRequest) =>
-    Effect.gen(function* () {
-      yield* Console.log(`[Worker] Received request for page "${page}"`);
-      // yield* Effect.sleep("2 seconds"); // simulate some hard work
-      switch (page) {
-        case "home":
-          content ??= "Welcome to the Home Page!";
-          return yield* Effect.succeed(pageFromLayout("Home", "/", content));
-        case "about":
-          content ??= "Welcome to the About Page!";
-          return yield* Effect.succeed(
-            pageFromLayout("About", "/about", content),
-          );
-        case "404":
-          return yield* Effect.succeed(
-            pageFromLayout("404", "/", "Page Not Found"),
-          );
-        default:
-          return yield* Effect.fail(
-            new NodeWorkerError({ message: "Unknown Endpoint" }),
-          );
-      }
-    }),
-  );
-}).pipe(Layer.scopedDiscard, Layer.provide(NodeWorkerRunner.layer));
+const worker = WorkerRunner.make(({ page, content }: WorkerRequest) =>
+  Effect.gen(function* () {
+    yield* Console.log(`[Worker] Received request for page "${page}"`);
+    // yield* Effect.sleep("2 seconds"); // simulate some hard work
+    switch (page) {
+      case "home":
+        content ??= "Welcome to the Home Page!";
+        return yield* Effect.succeed(pageFromLayout("Home", "/", content));
+      case "about":
+        content ??= "Welcome to the About Page!";
+        return yield* Effect.succeed(
+          pageFromLayout("About", "/about", content),
+        );
+      case "404":
+        return yield* Effect.succeed(
+          pageFromLayout("404", "/", "Page Not Found"),
+        );
+      default:
+        return yield* Effect.fail(
+          new WorkerError({ message: "Unknown Endpoint" }),
+        );
+    }
+  }),
+).pipe(Layer.scopedDiscard, Layer.provide(BunWorkerRunner.layer));
 
 const pageFromLayout = (
   title: string,
@@ -72,7 +70,7 @@ const pageFromLayout = (
             class="border rounded-sm h-[6em] p-1"
             placeholder="Enter content to display..."
           ></textarea>
-          <button class="bg-stone-100 hover:bg-stone-200 cursor-pointer border my-2 px-4 py-2 size-fit rounded-md">Update</button>
+          <input type="submit" class="bg-stone-100 hover:bg-stone-200 cursor-pointer border my-2 px-4 py-2 size-fit rounded-md" value="Update"/>
         </form>
       </div>
     </main>
@@ -89,4 +87,4 @@ const escapeHtml = (unsafe: string): string => {
     .replaceAll("'", "&#039;");
 };
 
-NodeWorkerRunner.launch(worker).pipe(NodeRuntime.runMain);
+BunWorkerRunner.launch(worker).pipe(BunRuntime.runMain);

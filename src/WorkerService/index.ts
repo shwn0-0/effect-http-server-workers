@@ -1,1 +1,1 @@
-export { NodeWorkersRpc } from "./WorkersRpc.js";
+export { WorkersRpc } from "./WorkersRpc.js";

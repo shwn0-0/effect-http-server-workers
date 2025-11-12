@@ -1,14 +1,10 @@
 import { RpcSerialization, RpcServer } from "@effect/rpc";
 import { Layer } from "effect";
 import { HttpRouter } from "@effect/platform";
-import { NodeHttpServer, NodeRuntime } from "@effect/platform-node";
-import { createServer } from "http";
+import { BunHttpServer, BunRuntime } from "@effect/platform-bun";
+import { WorkersLive, WorkersRpc } from "./WorkersRpc.js";
 
-import { NodeWorkersLive, NodeWorkersRpc } from "./WorkersRpc.js";
-
-const RpcLayer = RpcServer.layer(NodeWorkersRpc).pipe(
-  Layer.provide(NodeWorkersLive),
-);
+const RpcLayer = RpcServer.layer(WorkersRpc).pipe(Layer.provide(WorkersLive));
 
 const HttpProtocol = RpcServer.layerProtocolHttp({
   path: "/rpc",
@@ -17,7 +13,7 @@ const HttpProtocol = RpcServer.layerProtocolHttp({
 const Main = HttpRouter.Default.serve().pipe(
   Layer.provide(RpcLayer),
   Layer.provide(HttpProtocol),
-  Layer.provide(NodeHttpServer.layer(createServer, { port: 8080 })),
+  Layer.provide(BunHttpServer.layerServer({ port: 8080 })),
 );
 
-Layer.launch(Main).pipe(NodeRuntime.runMain);
+Layer.launch(Main).pipe(BunRuntime.runMain);
